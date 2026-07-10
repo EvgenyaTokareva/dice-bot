@@ -1,5 +1,12 @@
 import json
 import os
+import sys
+
+# Добавляем путь к корневой папке для импорта
+# Это нужно, чтобы Python видел файлы dice_parser.py и vk_utils.py
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# Теперь импорты работают
 from vk_utils import send_message, get_user_name
 from dice_parser import DiceParser
 
@@ -14,17 +21,14 @@ def handler(event, context):
         # 1. Получаем данные от VK (Callback API)
         body = json.loads(event['body'])
         
-        # Проверяем секретный ключ (если настроен)
-        # secret = event.get('headers', {}).get('x-secret-key')
-        # if secret != os.environ.get('VK_SECRET_KEY'):
-        #     return {'statusCode': 403, 'body': 'Forbidden'}
-        
         # 2. Проверяем тип события
         if body.get('type') == 'confirmation':
             # Для VK Callback API нужно вернуть confirmation code
+            confirmation_code = os.environ.get('VK_CONFIRMATION_CODE', 'confirmation_code_here')
+            print(f"Отправляем код подтверждения: {confirmation_code}")
             return {
                 'statusCode': 200,
-                'body': os.environ.get('VK_CONFIRMATION_CODE', 'confirmation_code_here')
+                'body': confirmation_code
             }
         
         if body.get('type') == 'message_new':
@@ -33,6 +37,8 @@ def handler(event, context):
             user_id = message_data.get('from_id')
             peer_id = message_data.get('peer_id')
             text = message_data.get('text', '').lower()
+            
+            print(f"Получено сообщение от {user_id}: {text}")
             
             if not user_id or not peer_id:
                 return {'statusCode': 200, 'body': 'ok'}
